@@ -411,12 +411,12 @@ function renderTimer() {
       <svg width="220" height="220" viewBox="0 0 220 220">
         <circle cx="110" cy="110" r="${r}" fill="none" stroke="rgba(125,143,131,0.15)" stroke-width="5"/>
         ${state.mode==='countdown' ? `<circle cx="110" cy="110" r="${r}" fill="none" stroke="#C7A05A" stroke-width="5"
-          stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+          stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}" id="timerRingProgress"
           transform="rotate(-90 110 110)" class="${state.running?'ring-animated':''}"
           style="transition:stroke-dashoffset 0.3s linear"/>` : ''}
       </svg>
       <div class="timer-display">
-        <span class="timer-digits ${state.running?'breathing':''}">${display}</span>
+        <span class="timer-digits ${state.running?'breathing':''}" id="timerDigits">${display}</span>
         <span class="timer-mode">${state.mode==='countdown'?'remaining':'elapsed'}</span>
       </div>
     </div>
@@ -553,9 +553,20 @@ function tick() {
     if (rem <= 0) {
       state.timeLeft = 0; state.running = false; state.finished = true;
       accumulated = state.duration*60; startTime = null; clearInterval(intervalId);
+      renderTimer(); // full render only on finish
+      return;
     } else { state.timeLeft = rem; }
   }
-  renderTimer();
+  // Patch only the changing elements
+  const digitsEl = document.getElementById('timerDigits');
+  if (digitsEl) digitsEl.textContent = state.mode === 'countdown' ? fmt(state.timeLeft) : fmt(state.elapsed);
+  if (state.mode === 'countdown') {
+    const ringEl = document.getElementById('timerRingProgress');
+    if (ringEl) {
+      const r = 90, c = 2*Math.PI*r, progress = 1 - state.timeLeft/(state.duration*60);
+      ringEl.setAttribute('stroke-dashoffset', c*(1-progress));
+    }
+  }
 }
 
 function resetAll() {

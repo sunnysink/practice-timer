@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Method Alchemy Practice Timer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Playfair+Display:ital@1&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #7A5B6E 0%, #5e4458 40%, #7A5B6E 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    font-family: 'Montserrat', sans-serif;
+    color: #F3E9DA;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+  @keyframes ringPulse {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(199,160,90,0.4)); }
+    50% { filter: drop-shadow(0 0 12px rgba(199,160,90,0.7)); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(199,160,90,0.15); }
+    50% { box-shadow: 0 0 35px rgba(199,160,90,0.3); }
+  }
+  .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+  .container {
+    width: 100%; max-width: 440px;
+    background: rgba(243,233,218,0.06);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid rgba(199,160,90,0.15);
+    padding: 36px 28px;
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 28px; position: relative; }
+  .header-row { display: flex; align-items: flex-start; justify-content: center; }
+  .header-center { text-align: center; flex: 3; }
+  .header-side { flex: 1; }
+  .header-accent { color: #C7A05A; font-size: 14px; letter-spacing: 8px; margin-bottom: 8px; }
+  .brand-name { font-family: 'Cinzel Decorative', serif; font-size: 11px; font-weight: 400; color: #C7A05A; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 2px; }
+  h1 { font-family: 'Cinzel Decorative', serif; font-size: 22px; font-weight: 400; color: #F3E9DA; letter-spacing: 1px; margin-bottom: 6px; }
+  .subtitle { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: rgba(243,233,218,0.6); }
+  .history-btn {
+    background: rgba(243,233,218,0.08); border: 1px solid rgba(199,160,90,0.2);
+    border-radius: 8px; color: rgba(243,233,218,0.6); cursor: pointer;
+    padding: 4px 8px; font-size: 16px; line-height: 1; transition: all 0.2s;
+  }
+  .history-btn:hover { border-color: #C7A05A; color: #C7A05A; }
+
+  /* Practice type grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .type-card {
+    background: rgba(243,233,218,0.04); border: 1px solid rgba(125,143,131,0.25);
+    border-radius: 12px; padding: 18px 12px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: all 0.25s ease; animation: fadeUp 0.4s ease forwards; opacity: 0;
+    color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+  }
+  .type-card:hover { transform: translateY(-3px); border-color: #C7A05A; box-shadow: 0 8px 24px rgba(199,160,90,0.2); }
+  .type-icon { font-size: 22px; line-height: 1; }
+  .type-label { font-size: 12px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* Duration */
+  .preset-row { display: flex; gap: 12px; justify-content: center; margin-bottom: 16px; }
+  .preset-btn {
+    background: transparent; border: 1.5px solid #C7A05A; border-radius: 10px;
+    color: #C7A05A; font-family: 'Montserrat', sans-serif; font-weight: 600;
+    font-size: 14px; padding: 10px 20px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+  }
+  .preset-btn:hover { background: #C7A05A; color: #F3E9DA; }
+  .custom-row { display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 20px; }
+  .custom-input {
+    background: rgba(243,233,218,0.08); border: 1px solid rgba(199,160,90,0.25);
+    border-radius: 10px; color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+    font-size: 14px; padding: 10px 14px; width: 140px; outline: none; text-align: center;
+  }
+  .divider-row { display: flex; align-items: center; gap: 14px; margin: 4px 0 16px; }
+  .divider-line { flex: 1; height: 1px; background: rgba(125,143,131,0.2); }
+  .divider-text { font-size: 12px; color: rgba(243,233,218,0.35); font-style: italic; font-family: 'Playfair Display', serif; }
+  .stopwatch-btn {
+    width: 100%; background: transparent; border: 1px dashed rgba(122,91,110,0.4);
+    border-radius: 10px; color: #F7DCD6; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; padding: 12px 16px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .stopwatch-btn:hover { background: rgba(122,91,110,0.12); }
+
+  /* Timer */
+  .timer-ring { position: relative; width: 220px; height: 220px; margin: 0 auto 24px; }
+  .timer-display {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .timer-digits {
+    font-family: 'Cinzel Decorative', serif; font-size: 40px; font-weight: 700;
+    color: #F3E9DA; letter-spacing: 3px;
+  }
+  .timer-digits.breathing { animation: breathe 4s ease-in-out infinite; }
+  .timer-mode {
+    font-size: 11px; color: rgba(243,233,218,0.4); text-transform: uppercase;
+    letter-spacing: 2px; margin-top: 4px; font-family: 'Montserrat', sans-serif;
+  }
+  .ring-animated { animation: ringPulse 3s ease-in-out infinite; }
+  .control-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(135deg, #C7A05A, #d4b574); border: none; border-radius: 12px;
+    color: #3d2a36; font-family: 'Montserrat', sans-serif; font-weight: 600;
+    font-size: 14px; padding: 12px 32px; cursor: pointer; letter-spacing: 0.5px; transition: all 0.2s;
+  }
+  .btn-primary:hover { animation: pulseGlow 2s ease-in-out infinite; }
+  .btn-secondary {
+    background: rgba(243,233,218,0.08); border: 1px solid rgba(243,233,218,0.2);
+    border-radius: 12px; color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+    font-weight: 500; font-size: 14px; padding: 12px 32px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-finish {
+    background: transparent; border: 1.5px solid #C7A05A; border-radius: 12px;
+    color: #C7A05A; font-family: 'Montserrat', sans-serif; font-weight: 600;
+    font-size: 14px; padding: 12px 28px; cursor: pointer; transition: all 0.2s;
+  }
+  .back-link {
+    background: none; border: none; color: rgba(243,233,218,0.4);
+    font-family: 'Montserrat', sans-serif; font-size: 12px; cursor: pointer;
+    margin-top: 18px; display: block; text-align: center; width: 100%;
+  }
+  .skip-link {
+    background: none; border: none; color: rgba(243,233,218,0.4);
+    font-family: 'Montserrat', sans-serif; font-size: 12px; cursor: pointer;
+    margin-top: 10px; display: block; text-align: center; width: 100%;
+  }
+
+  /* Complete */
+  .done-label { font-family: 'Cinzel Decorative', serif; color: #C7A05A; font-size: 18px; margin-bottom: 6px; letter-spacing: 2px; }
+  .total-time { font-size: 13px; color: rgba(243,233,218,0.5); margin-bottom: 18px; }
+  .saved-badge { font-family: 'Cinzel Decorative', serif; color: #C7A05A; font-size: 16px; letter-spacing: 2px; margin-bottom: 16px; }
+
+  /* Reflect */
+  .reflect-summary {
+    display: flex; align-items: center; gap: 10px; justify-content: center;
+    margin-bottom: 24px; padding: 10px 16px;
+    background: rgba(199,160,90,0.08); border-radius: 10px;
+    border: 1px solid rgba(199,160,90,0.15); font-size: 14px; font-weight: 500;
+  }
+  .field-group { margin-bottom: 22px; }
+  .field-label {
+    display: block; font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(243,233,218,0.6); margin-bottom: 8px;
+  }
+  .conf-value { color: #C7A05A; font-weight: 700; }
+  .conf-label { font-weight: 400; text-transform: none; letter-spacing: 0; font-style: italic; font-family: 'Playfair Display', serif; font-size: 13px; }
+  .text-input {
+    width: 100%; background: rgba(243,233,218,0.06); border: 1px solid rgba(125,143,131,0.25);
+    border-radius: 10px; color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+    font-size: 14px; padding: 11px 14px; outline: none;
+  }
+  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  .slider-edge { font-size: 12px; color: rgba(243,233,218,0.35); font-weight: 600; min-width: 14px; text-align: center; }
+  input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: transparent; border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: rgba(125,143,131,0.3); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: #C7A05A; border: 2px solid #7A5B6E; cursor: pointer; margin-top: -7px;
+  }
+  input[type="range"]::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(125,143,131,0.3); border: none; }
+  input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #C7A05A; border: 2px solid #7A5B6E; cursor: pointer; }
+  .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: rgba(243,233,218,0.3); margin-top: 4px; padding: 0 26px; }
+  textarea.reflect-textarea {
+    width: 100%; background: rgba(243,233,218,0.06); border: 1px solid rgba(125,143,131,0.25);
+    border-radius: 10px; color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+    font-size: 14px; padding: 11px 14px; outline: none; resize: vertical; min-height: 80px;
+  }
+  .reflect-actions { text-align: center; }
+  .copy-btn {
+    background: none; border: 1px solid rgba(199,160,90,0.3); border-radius: 8px;
+    color: #C7A05A; font-family: 'Montserrat', sans-serif; font-size: 12px;
+    font-weight: 500; padding: 7px 16px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .copy-textarea {
+    width: 100%; background: rgba(243,233,218,0.06); border: 1px solid rgba(199,160,90,0.2);
+    border-radius: 8px; color: #F3E9DA; font-family: 'Montserrat', sans-serif;
+    font-size: 11px; padding: 10px 12px; outline: none; resize: none; margin-top: 10px; line-height: 1.6;
+  }
+
+  /* History */
+  .history-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
+  .history-card { background: rgba(243,233,218,0.04); border: 1px solid rgba(125,143,131,0.2); border-radius: 12px; padding: 14px 16px; }
+  .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .history-type { font-weight: 600; font-size: 13px; letter-spacing: 0.3px; }
+  .history-date { font-size: 11px; color: rgba(243,233,218,0.4); }
+  .history-meta { display: flex; justify-content: space-between; font-size: 12px; color: rgba(243,233,218,0.6); margin-bottom: 6px; }
+  .history-detail { font-size: 12px; color: rgba(243,233,218,0.5); margin-top: 4px; line-height: 1.5; }
+  .history-actions { display: flex; gap: 12px; margin-top: 10px; border-top: 1px solid rgba(125,143,131,0.1); padding-top: 8px; }
+  .history-action-btn {
+    background: none; border: none; color: #C7A05A; font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 500; cursor: pointer; padding: 2px 0;
+  }
+  .history-action-btn.muted { color: rgba(243,233,218,0.3); }
+  .clear-row { text-align: center; margin-top: 14px; }
+  .clear-confirm { display: flex; gap: 12px; justify-content: center; align-items: center; }
+  .clear-confirm span { font-size: 12px; color: rgba(243,233,218,0.5); }
+
+  /* Footer */
+  .footer {
+    text-align: center; margin-top: 24px; padding: 0 16px;
+    width: 100%; max-width: 440px;
+  }
+  .footer-links { display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .footer-link {
+    font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 1.5px; color: #C7A05A; text-decoration: none;
+  }
+  .footer-link:hover { text-decoration: underline; }
+  .footer-divider { color: rgba(243,233,218,0.25); font-size: 11px; }
+  .footer-text { font-family: 'Montserrat', sans-serif; font-size: 10px; color: rgba(243,233,218,0.35); line-height: 1.8; }
+  .footer-email { font-family: 'Montserrat', sans-serif; font-size: 10px; color: #C7A05A; line-height: 1.8; text-decoration: none; }
+
+  .hidden { display: none !important; }
+  .text-center { text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div class="header-side"></div>
+      <div class="header-center">
+        <div class="header-accent">✦</div>
+        <div class="brand-name">Method Alchemy</div>
+        <h1>Practice Timer</h1>
+      </div>
+      <div class="header-side" style="display:flex;justify-content:flex-end">
+        <button class="history-btn hidden" id="historyBtn" onclick="showHistory()">☰</button>
+      </div>
+    </div>
+    <p class="subtitle" id="subtitle">What are you practicing?</p>
+  </div>
+
+  <!-- Steps -->
+  <div id="step-select"></div>
+  <div id="step-duration" class="hidden"></div>
+  <div id="step-timer" class="hidden"></div>
+  <div id="step-reflect" class="hidden"></div>
+  <div id="step-history" class="hidden"></div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-links">
+    <a href="https://www.sunnysink.com/privacy-policy" target="_blank" rel="noopener noreferrer" class="footer-link">PRIVACY POLICY</a>
+    <span class="footer-divider">|</span>
+    <a href="https://www.sunnysink.com/terms-conditions" target="_blank" rel="noopener noreferrer" class="footer-link">TERMS & CONDITIONS</a>
+  </div>
+  <div class="footer-text">© 2026 S Sink Coaching</div>
+  <div class="footer-text">PO Box 1651 Gillette, WY 82717-1651</div>
+  <a href="mailto:support@sunnysink.com" class="footer-email">support@sunnysink.com</a>
+</div>
+
+<script>
+const TYPES = [
+  { id: 'reading', label: 'Tarot Reading', icon: '✦' },
+  { id: 'coaching', label: 'Coaching', icon: '🜁' },
+  { id: 'journaling', label: 'Journaling', icon: '🜂' },
+  { id: 'meditation', label: 'Meditation', icon: '◎' },
+  { id: 'study', label: 'Study / Review', icon: '📖' },
+  { id: 'client', label: 'Client Prep', icon: '🜃' },
+  { id: 'other', label: 'Other', icon: '∞' },
+];
+const PRESETS = [15, 30, 45];
+const CONF = ['Still fumbling','Getting warmer','Finding my rhythm','Feeling solid','On fire'];
+
+let state = {
+  step: 'select', practiceType: null, duration: null, mode: null,
+  timeLeft: 0, elapsed: 0, running: false, finished: false,
+  confidence: 3, reflection: '', practiced: '', saved: false,
+  showCopyText: null, confirmClear: false,
+};
+let sessions = [];
+let intervalId = null;
+let startTime = null;
+let accumulated = 0;
+
+// --- Storage ---
+function loadSessions() {
+  try { sessions = JSON.parse(localStorage.getItem('ma-practice-sessions') || '[]'); } catch(e) { sessions = []; }
+}
+function saveSessions() {
+  try { localStorage.setItem('ma-practice-sessions', JSON.stringify(sessions)); } catch(e) {}
+}
+loadSessions();
+
+// --- Helpers ---
+function fmt(sec) {
+  const m = Math.floor(sec/60), s = sec % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('en-US',{month:'short'}) + ' ' + d.getDate() + ', ' +
+    d.toLocaleString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+function typeFor(id) { return TYPES.find(t=>t.id===id) || {label:id,icon:''}; }
+function sessionText(s) {
+  const t = typeFor(s.practiceType);
+  let lines = [`Practice Session — ${fmtDate(s.date)}`,`Type: ${t.label}`,`Duration: ${fmt(s.elapsed)}`];
+  if (s.practiced) lines.push(`Practiced: ${s.practiced}`);
+  lines.push(`Confidence: ${s.confidence}/5 — ${CONF[s.confidence-1]}`);
+  if (s.reflection) lines.push(`Reflection: ${s.reflection}`);
+  return lines.join('\n');
+}
+
+async function copyText(text, btnEl) {
+  const orig = btnEl.textContent;
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); btnEl.textContent = '✓ Copied!'; setTimeout(()=> btnEl.textContent = orig, 2000); return; }
+  } catch(e) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand('copy'); document.body.removeChild(ta);
+    if (ok) { btnEl.textContent = '✓ Copied!'; setTimeout(()=> btnEl.textContent = orig, 2000); return; }
+  } catch(e) {}
+}
+
+// --- Rendering ---
+function showStep(name) {
+  state.step = name;
+  ['select','duration','timer','reflect','history'].forEach(s => {
+    document.getElementById('step-'+s).classList.toggle('hidden', s !== name);
+  });
+  const btn = document.getElementById('historyBtn');
+  btn.classList.toggle('hidden', name === 'history' || sessions.length === 0);
+  const sub = document.getElementById('subtitle');
+  if (name === 'select') sub.textContent = 'What are you practicing?';
+  else if (name === 'duration' || name === 'timer') sub.textContent = typeFor(state.practiceType).label;
+  else if (name === 'reflect') sub.textContent = 'How did it go?';
+  else if (name === 'history') sub.textContent = 'Past sessions';
+}
+
+function renderSelect() {
+  const el = document.getElementById('step-select');
+  el.innerHTML = '<div class="grid">' + TYPES.map((t,i) =>
+    `<button class="type-card" style="animation-delay:${i*0.07}s" onclick="selectType('${t.id}')">
+      <span class="type-icon">${t.icon}</span><span class="type-label">${t.label}</span>
+    </button>`
+  ).join('') + '</div>';
+}
+
+function renderDuration() {
+  const el = document.getElementById('step-duration');
+  el.innerHTML = `<div class="fade-up">
+    <div class="preset-row">${PRESETS.map(m=>`<button class="preset-btn" onclick="selectDuration(${m})">${m} min</button>`).join('')}</div>
+    <div class="custom-row">
+      <input type="number" class="custom-input" id="customMin" placeholder="Custom minutes" min="1" max="180">
+      <button class="preset-btn" onclick="setCustom()">Set</button>
+    </div>
+    <div class="divider-row"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>
+    <button class="stopwatch-btn" onclick="startStopwatch()"><span style="font-size:18px">⏱</span> Open stopwatch (no limit)</button>
+    <button class="back-link" onclick="goSelect()">← back</button>
+  </div>`;
+}
+
+function renderTimer() {
+  const el = document.getElementById('step-timer');
+  const display = state.mode === 'countdown' ? fmt(state.timeLeft) : fmt(state.elapsed);
+  const progress = state.mode === 'countdown' && state.duration ? 1 - state.timeLeft/(state.duration*60) : 0;
+  const r = 90, c = 2*Math.PI*r, offset = c*(1-progress);
+
+  let controls = '';
+  if (!state.finished) {
+    if (!state.running) {
+      controls = `<button class="btn-primary" onclick="startRun()">${state.elapsed > 0 ? 'Resume' : 'Start'}</button>`;
+      if (state.mode === 'stopwatch' && state.elapsed > 0) {
+        controls += ` <button class="btn-finish" onclick="finishStopwatch()">Finish</button>`;
+      }
+    } else {
+      controls = `<button class="btn-secondary" onclick="pauseRun()">Pause</button>`;
+    }
+  } else {
+    controls = `<div class="fade-up text-center">
+      <div class="done-label">✦ Complete ✦</div>
+      <div class="total-time">${fmt(state.elapsed)} total</div>
+      <button class="btn-primary" onclick="goReflect()">Reflect</button>
+      <button class="skip-link" onclick="resetAll()">Skip → new session</button>
+    </div>`;
+  }
+
+  el.innerHTML = `<div class="fade-up text-center">
+    <div class="timer-ring">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <circle cx="110" cy="110" r="${r}" fill="none" stroke="rgba(125,143,131,0.15)" stroke-width="5"/>
+        ${state.mode==='countdown' ? `<circle cx="110" cy="110" r="${r}" fill="none" stroke="#C7A05A" stroke-width="5"
+          stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${offset}"
+          transform="rotate(-90 110 110)" class="${state.running?'ring-animated':''}"
+          style="transition:stroke-dashoffset 0.3s linear"/>` : ''}
+      </svg>
+      <div class="timer-display">
+        <span class="timer-digits ${state.running?'breathing':''}">${display}</span>
+        <span class="timer-mode">${state.mode==='countdown'?'remaining':'elapsed'}</span>
+      </div>
+    </div>
+    <div class="control-row">${controls}</div>
+    ${!state.finished ? '<button class="back-link" onclick="resetAll()">← start over</button>' : ''}
+  </div>`;
+}
+
+function renderReflect() {
+  const el = document.getElementById('step-reflect');
+  const t = typeFor(state.practiceType);
+  const copyId = 'current';
+  const showText = state.showCopyText === copyId;
+
+  let actions = '';
+  if (!state.saved) {
+    actions = `<div class="reflect-actions">
+      <button class="btn-primary" onclick="saveSession()">Save Session</button>
+      <div style="margin-top:8px"><button class="copy-btn" id="copyBtnCurrent" onclick="copyCurrent(this)">📋 Copy results</button></div>
+      ${showText ? `<textarea class="copy-textarea" rows="6" readonly onfocus="this.select()">${esc(sessionText(currentSession()))}</textarea>` : ''}
+      <button class="skip-link" onclick="resetAll()">Skip</button>
+    </div>`;
+  } else {
+    actions = `<div class="fade-up text-center">
+      <div class="saved-badge">✦ Session logged ✦</div>
+      <button class="copy-btn" id="copyBtnCurrent" onclick="copyCurrent(this)" style="margin-bottom:12px">📋 Copy results</button>
+      ${showText ? `<textarea class="copy-textarea" rows="6" readonly onfocus="this.select()">${esc(sessionText(currentSession()))}</textarea>` : ''}
+      <br><button class="btn-primary" onclick="resetAll()">New Session</button>
+    </div>`;
+  }
+
+  el.innerHTML = `<div class="fade-up">
+    <div class="reflect-summary"><span style="font-size:18px">${t.icon}</span><span>${t.label} — ${fmt(state.elapsed)}</span></div>
+    <div class="field-group">
+      <label class="field-label">What did you practice?</label>
+      <input type="text" class="text-input" id="practicedInput" placeholder="e.g. Celtic Cross with reversals" value="${esc(state.practiced)}" oninput="state.practiced=this.value">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Confidence: <span class="conf-value">${state.confidence}</span> <span class="conf-label">— ${CONF[state.confidence-1]}</span></label>
+      <div class="slider-wrap">
+        <span class="slider-edge">1</span>
+        <input type="range" min="1" max="5" value="${state.confidence}" oninput="state.confidence=+this.value;renderReflect()">
+        <span class="slider-edge">5</span>
+      </div>
+      <div class="slider-labels"><span>Still fumbling</span><span>On fire</span></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Reflection (optional)</label>
+      <textarea class="reflect-textarea" rows="4" id="reflectionInput" placeholder="Any insights, breakthroughs, or sticking points..." oninput="state.reflection=this.value">${esc(state.reflection)}</textarea>
+    </div>
+    ${actions}
+  </div>`;
+}
+
+function renderHistory() {
+  const el = document.getElementById('step-history');
+  if (sessions.length === 0) {
+    el.innerHTML = `<div class="fade-up"><p class="text-center" style="color:rgba(243,233,218,0.4);font-size:14px">No sessions yet.</p>
+      <button class="back-link" onclick="goSelect()">← back to timer</button></div>`;
+    return;
+  }
+  let cards = sessions.map((s,i) => {
+    const t = typeFor(s.practiceType);
+    const showText = state.showCopyText === s.id;
+    return `<div class="history-card">
+      <div class="history-top"><span class="history-type">${t.icon} ${t.label}</span><span class="history-date">${fmtDate(s.date)}</span></div>
+      <div class="history-meta"><span>${fmt(s.elapsed)}</span><span style="color:#C7A05A">Confidence: ${s.confidence}/5</span></div>
+      ${s.practiced ? `<div class="history-detail"><strong>Practiced:</strong> ${esc(s.practiced)}</div>` : ''}
+      ${s.reflection ? `<div class="history-detail"><strong>Reflection:</strong> ${esc(s.reflection)}</div>` : ''}
+      <div class="history-actions">
+        <button class="history-action-btn" id="copyHist${i}" onclick="copyHistory(${i},this)">📋 Copy</button>
+        <button class="history-action-btn muted" onclick="deleteSession(${i})">Delete</button>
+      </div>
+      ${showText ? `<textarea class="copy-textarea" rows="5" readonly onfocus="this.select()" style="margin-top:8px">${esc(sessionText(s))}</textarea>` : ''}
+    </div>`;
+  }).join('');
+
+  let clearHtml = '';
+  if (!state.confirmClear) {
+    clearHtml = `<button class="history-action-btn muted" style="font-size:12px" onclick="state.confirmClear=true;renderHistory()">Clear all sessions</button>`;
+  } else {
+    clearHtml = `<div class="clear-confirm"><span>Clear everything?</span>
+      <button class="history-action-btn" style="font-size:12px" onclick="clearAll()">Yes</button>
+      <button class="history-action-btn muted" style="font-size:12px" onclick="state.confirmClear=false;renderHistory()">Cancel</button></div>`;
+  }
+
+  el.innerHTML = `<div class="fade-up">
+    <div class="history-list">${cards}</div>
+    <div class="clear-row">${clearHtml}</div>
+    <button class="back-link" onclick="state.confirmClear=false;goSelect()">← back to timer</button>
+  </div>`;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// --- Actions ---
+function selectType(id) { state.practiceType = id; renderDuration(); showStep('duration'); }
+function selectDuration(min) {
+  state.duration = min; state.mode = 'countdown'; state.timeLeft = min*60;
+  state.elapsed = 0; accumulated = 0; startTime = null; state.finished = false;
+  renderTimer(); showStep('timer');
+}
+function setCustom() { const v = parseInt(document.getElementById('customMin').value); if (v > 0) selectDuration(v); }
+function startStopwatch() {
+  state.duration = null; state.mode = 'stopwatch'; state.timeLeft = 0;
+  state.elapsed = 0; accumulated = 0; startTime = null; state.finished = false;
+  renderTimer(); showStep('timer');
+}
+function goSelect() { renderSelect(); showStep('select'); }
+function goReflect() { renderReflect(); showStep('reflect'); }
+
+function startRun() {
+  startTime = Date.now(); state.running = true; state.finished = false;
+  intervalId = setInterval(tick, 250);
+  renderTimer();
+}
+function pauseRun() {
+  if (startTime) { accumulated += (Date.now() - startTime)/1000; startTime = null; }
+  state.running = false; clearInterval(intervalId);
+  renderTimer();
+}
+function finishStopwatch() {
+  if (startTime) { accumulated += (Date.now() - startTime)/1000; startTime = null; }
+  state.running = false; state.finished = true; clearInterval(intervalId);
+  state.elapsed = Math.floor(accumulated);
+  renderTimer();
+}
+
+function tick() {
+  const real = Math.floor(accumulated + (Date.now() - startTime)/1000);
+  state.elapsed = real;
+  if (state.mode === 'countdown') {
+    const rem = state.duration*60 - real;
+    if (rem <= 0) {
+      state.timeLeft = 0; state.running = false; state.finished = true;
+      accumulated = state.duration*60; startTime = null; clearInterval(intervalId);
+    } else { state.timeLeft = rem; }
+  }
+  renderTimer();
+}
+
+function resetAll() {
+  clearInterval(intervalId); startTime = null; accumulated = 0;
+  state = { step:'select', practiceType:null, duration:null, mode:null,
+    timeLeft:0, elapsed:0, running:false, finished:false,
+    confidence:3, reflection:'', practiced:'', saved:false,
+    showCopyText:null, confirmClear:false };
+  renderSelect(); showStep('select');
+}
+
+function currentSession() {
+  return { id:null, date:new Date().toISOString(), practiceType:state.practiceType,
+    elapsed:state.elapsed, practiced:state.practiced, confidence:state.confidence, reflection:state.reflection };
+}
+
+function saveSession() {
+  const s = { ...currentSession(), id: Date.now().toString() };
+  sessions.unshift(s);
+  if (sessions.length > 50) sessions = sessions.slice(0,50);
+  saveSessions(); state.saved = true;
+  document.getElementById('historyBtn').classList.remove('hidden');
+  renderReflect();
+}
+
+function copyCurrent(btn) {
+  state.showCopyText = state.showCopyText === 'current' ? null : 'current';
+  copyText(sessionText(currentSession()), btn);
+  renderReflect();
+}
+
+function copyHistory(idx, btn) {
+  const s = sessions[idx];
+  state.showCopyText = state.showCopyText === s.id ? null : s.id;
+  copyText(sessionText(s), btn);
+  renderHistory();
+}
+
+function deleteSession(idx) {
+  sessions.splice(idx, 1); saveSessions(); renderHistory();
+  if (sessions.length === 0) document.getElementById('historyBtn').classList.add('hidden');
+}
+
+function clearAll() {
+  sessions = []; saveSessions(); state.confirmClear = false;
+  document.getElementById('historyBtn').classList.add('hidden');
+  renderHistory();
+}
+
+function showHistory() { state.confirmClear = false; renderHistory(); showStep('history'); }
+
+// --- Init ---
+renderSelect();
+if (sessions.length > 0) document.getElementById('historyBtn').classList.remove('hidden');
+</script>
+</body>
+</html>
